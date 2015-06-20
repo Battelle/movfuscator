@@ -1,0 +1,14 @@
+M/o/Vfuscator 2.0 crackme
+github.com/xoreaxeaxeax/movfuscator
+
+Goal:
+  Find the key.
+
+Details:
+  A simple 15 line crackme in C, compiled with the M/o/Vfuscator2.  
+
+Issues:
+  M/o/Vfuscator2 still uses a cmp/je for external calls, and some control flow
+  details are leaked through .text section references in the mov instructions.
+  Stack details are still revealed through ebp/esp references.  All will be
+  fixed shortly.
