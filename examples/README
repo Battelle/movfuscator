@@ -1,0 +1,34 @@
+A collection of M/o/Vfuscated example programs:
+
+	nibbles:
+		Compiled from C to movs with M/o/Vfuscator2.
+		Move with w, a, s, d.
+		The jmp at the end and external calls still need to be movfuscated.
+
+	factor:
+		Compiled from BF to movs with M/o/Vfuscator1.
+		Example of using no compiler flags, leaving the int 0x80 and single jmp.
+
+	primes:
+		Compiled from BF to movs with M/o/Vfuscator1.
+		Example of -nojmp flag, removing the jmp instruction at the end.
+
+	99_bottles:
+		Compiled from BASIC to BF with BFBASIC, BF to movs with M/o/Vfuscator1.
+		Example of -mmio and -nojmp flags, leaving only mov instructions.
+		Uses MMIO for output, so requires file-backed I/O streams.
+
+Run with:
+
+	./example
+
+Executables compiled with the -mmio flag require file-backed I/O streams, and
+should be run with:
+
+	./example < sample_in > sample_out
+
+or:
+
+	./demo.sh example
+
+to watch the output directly.
