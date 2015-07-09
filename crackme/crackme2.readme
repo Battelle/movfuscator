@@ -9,7 +9,3 @@ Details:
 
   Same as crackme1, but with a new key and a constant time strcmp.  Should
   prevent the easiest solutions to crackme1.
-
-Issues:
-  M/o/Vfuscator2 still uses a cmp/je for external calls.  Stack details are
-  still revealed through ebp/esp references.  All will be fixed shortly.
