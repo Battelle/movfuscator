@@ -1,0 +1,12 @@
+@@ -163,8 +163,9 @@
+ 						  	typeerror(ADD, p, NULL);  break;
+ 	case '-':    t = gettok(); p = unary(); p = pointer(p);
+ 						  if (isarith(p->type)) {
+-						  	Type ty = promote(p->type);
+-						  	p = cast(p, ty);
++						  	Type ty = p->type;
++						  	//Type ty = promote(p->type);
++						  	//p = cast(p, ty);
+ 						  	if (isunsigned(ty)) {
+ 						  		warning("unsigned operand of unary -\n");
+ 						  		p = simplify(ADD, ty, simplify(BCOM, ty, p, NULL), cnsttree(ty, 1UL));

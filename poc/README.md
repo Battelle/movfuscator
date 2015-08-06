@@ -4,7 +4,7 @@ The single instruction compiler.
 ## Overview
 The M/o/Vfuscator (short 'o', sounds like "mobfuscator") compiles programs into "mov" instructions, and only "mov" instructions.  Arithmetic, comparisons, jumps, function calls, and everything else a program needs are all emulated through movs, and there is no SMC cheating.  The compiler is inspired by the paper "mov is Turing-complete", by Stephen Dolan.
 
-The original M/o/Vfuscator (M/o/Vfuscator 1.0) compiles programs from the esoteric language BrainF@$!, and is best used in conjunction with the BFBASIC compiler by Jeffry Johnston.  M/o/Vfuscator 2.0 is a complete C compiler, and will be available soon.
+The original M/o/Vfuscator (M/o/Vfuscator 1.0) compiles programs from the esoteric language BrainF@$!, and is best used in conjunction with the BFBASIC compiler by Jeffry Johnston.  M/o/Vfuscator 2.0 is a complete C compiler, and is available now.
 
 ## Usage
 

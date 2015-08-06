@@ -1,0 +1,8 @@
+@@ -668,7 +668,6 @@
+ 			Symbol ri = set->x.wildcard[i];
+ 			if (
+ 				ri != NULL &&
+-				ri->x.lastuse &&
+ 				(ri->x.regnode->mask&tmask[ri->x.regnode->set]&mask[ri->x.regnode->set])
+ 			) {
+ 				Regnode rn = ri->x.regnode;

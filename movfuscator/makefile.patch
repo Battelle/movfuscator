@@ -1,0 +1,43 @@
+@@ -62,7 +62,8 @@
+ 	$Bsparc$O \
+ 	$Bstab$O \
+ 	$Bx86$O \
+-	$Bx86linux$O
++	$Bx86linux$O \
++	$Bmov$O
+ 
+ $Brcc$E::	$Bmain$O $Blibrcc$A $(EXTRAOBJS)
+ 		$(LD) $(LDFLAGS) -o $@ $Bmain$O $(EXTRAOBJS) $Blibrcc$A $(EXTRALIBS)
+@@ -108,6 +109,7 @@
+ $Bsparc$O:	$Bsparc.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bsparc.c
+ $Bx86$O:	$Bx86.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bx86.c
+ $Bx86linux$O:	$Bx86linux.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bx86linux.c
++$Bmov$O:	$Bmov.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bmov.c
+ 
+ $Bdagcheck.c:	$Blburg$E src/dagcheck.md; $Blburg src/dagcheck.md $@
+ $Balpha.c:	$Blburg$E src/alpha.md;    $Blburg src/alpha.md    $@
+@@ -115,6 +117,7 @@
+ $Bsparc.c:	$Blburg$E src/sparc.md;    $Blburg src/sparc.md    $@
+ $Bx86.c:	$Blburg$E src/x86.md;      $Blburg src/x86.md      $@
+ $Bx86linux.c:	$Blburg$E src/x86linux.md; $Blburg src/x86linux.md $@
++$Bmov.c:	$Blburg$E ../movfuscator/mov.md; $Blburg ../movfuscator/mov.md $@
+ 
+ $Bbprint$E:	$Bbprint$O;		$(LD) $(LDFLAGS) -o $@ $Bbprint$O 
+ $Bops$E:	$Bops$O;		$(LD) $(LDFLAGS) -o $@ $Bops$O 
+@@ -221,7 +224,7 @@
+ 
+ clean::		testclean
+ 		$(RM) $B*$O
+-		$(RM) $Bdagcheck.c $Balpha.c $Bmips.c $Bx86.c $Bsparc.c $Bx86linux.c
++		$(RM) $Bdagcheck.c $Balpha.c $Bmips.c $Bx86.c $Bsparc.c $Bx86linux.c $Bmov.c
+ 		$(RM) $Brcc1$E $Brcc1$E $B1rcc$E $B2rcc$E
+ 		$(RM) $B*.ilk
+ 
+@@ -263,6 +266,7 @@
+ 	$Bmips.c \
+ 	$Bsparc.c \
+ 	$Bx86linux.c \
++	$Bmov.c \
+ 	$Bx86.c
+ 
+ C=$Blcc -A -d0.6 -Wo-lccdir=$(BUILDDIR) -Isrc -I$(BUILDDIR)

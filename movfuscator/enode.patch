@@ -1,0 +1,9 @@
+@@ -46,7 +46,7 @@
+ 					if (aty)
+ 						q = cast(q, aty);
+ 					else
+-						error("type error in argument %d to %s; found `%t' expected `%t'\n", n + 1, funcname(f),
++						warning("type error in argument %d to %s; found `%t' expected `%t'\n", n + 1, funcname(f),
+ 
+ 							q->type, *proto);
+ 					if ((isint(q->type) || isenum(q->type))
