@@ -13,9 +13,8 @@ mkdir -p "$BUILDDIR"
 mkdir -p "$BUILDDIR/include"
 cp -p -R lcc/include/x86/linux/* "$BUILDDIR/include"
 
-# Link to gcc's library directory.  This path may be different on your system.
-#ln -sfn /usr/lib/gcc/x86_64-linux-gnu/4.8/ "$BUILDDIR/gcc"
-GCCLN=$(dirname $(find /usr/lib/gcc*/*/[0-9]* /usr/local/lib/gcc*/*/[0-9]* -name cpp 2>/dev/null | head -1))
+# Link to gcc's library directory
+GCCLN=$(gcc --print-search-dirs | grep install | head -1 | cut -d " " -f 2-)
 ln -sfn "$GCCLN" "$BUILDDIR/gcc"
 
 # Bind to the backend
@@ -39,17 +38,17 @@ make -C lcc HOSTFILE=../movfuscator/host.c CFLAGS='-g -DLCCDIR=\"$(BUILDDIR)/\"'
 # Build lcc with the M/o/Vfuscator backend
 make -C lcc all
 
-# Install
-sudo ln -sfn "$BUILDDIR/lcc" /usr/local/bin/movcc
+# Create movcc
+ln -sfn "$BUILDDIR/lcc" "$BUILDDIR/movcc"
 
 # Build the M/o/Vfuscator crt libraries
-movcc movfuscator/crt0.c -o "$BUILDDIR/crt0.o" -c -Wf--crt0 -Wf--q
-movcc movfuscator/crtf.c -o "$BUILDDIR/crtf.o" -c -Wf--crtf -Wf--q
-movcc movfuscator/crtd.c -o "$BUILDDIR/crtd.o" -c -Wf--crtd -Wf--q
+"$BUILDDIR/movcc" movfuscator/crt0.c -o "$BUILDDIR/crt0.o" -c -Wf--crt0 -Wf--q
+"$BUILDDIR/movcc" movfuscator/crtf.c -o "$BUILDDIR/crtf.o" -c -Wf--crtf -Wf--q
+"$BUILDDIR/movcc" movfuscator/crtd.c -o "$BUILDDIR/crtd.o" -c -Wf--crtd -Wf--q
 
 # Build the M/o/Vfuscator soft float library
 # These may give warnings about overflows, they are (mostly) safe to ignore
-make -C softfloat clean && make -C softfloat
+make -C softfloat clean && make -C softfloat CC="$BUILDDIR/movcc"
 mkdir -p movfuscator/lib
 cp softfloat/softfloat32.o movfuscator/lib/softfloat32.o
 cp softfloat/softfloat64.o movfuscator/lib/softfloat64.o

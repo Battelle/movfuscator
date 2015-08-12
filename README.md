@@ -39,10 +39,14 @@ The M/o/Vfuscator uses LCC as the compiler frontend.  The included build script
 will automatically download LCC, configure it for the mov backend, and build the
 M/o/Vfuscator tool.
 
+If you are building on a 64 bit system, ensure that you have a 32 bit libc
+available (for example, 'sudo apt-get install libc6-i386 libc6-dev-i386').
+
 ```
 git clone https://github.com/xoreaxeaxeax/movfuscator
 cd movfuscator
 ./build.sh
+sudo ./install.sh
 ```
 
 If you have trouble building LCC, you can get more details on the LCC build

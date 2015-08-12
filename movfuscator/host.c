@@ -16,7 +16,7 @@ char *suffixes[]={
 char inputs[256]="";
 
 char *cpp[]={
-	LCCDIR "gcc/cpp",
+	"/usr/bin/cpp",
 	"-U__GNUC__",
 	"-D_POSIX_SOURCE",
 	/* "-D__STDC__=1", */
