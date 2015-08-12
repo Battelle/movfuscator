@@ -1,6 +1,7 @@
+CC = movcc
 INCLUDES = -I. -I..
-COMPILE_C = movcc -c $(INCLUDES) -o $@ -Wf--q
-LINK = movcc -o $@
+COMPILE_C = $(CC) -c $(INCLUDES) -o $@ -Wf--q
+LINK = $(CC) -o $@
 
 ALL: softfloat32.o softfloat64.o softfloatfull.o timesoftfloat
 
