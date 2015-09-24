@@ -40,7 +40,8 @@ will automatically download LCC, configure it for the mov backend, and build the
 M/o/Vfuscator tool.
 
 If you are building on a 64 bit system, ensure that you have a 32 bit libc
-available (for example, 'sudo apt-get install libc6-i386 libc6-dev-i386').
+available (for example, 'apt-get install libc6-dev-i386' or 'yum install
+glibc-devel.i686').
 
 ```
 git clone https://github.com/xoreaxeaxeax/movfuscator
@@ -144,7 +145,7 @@ Flags are passed to the compiler proper via -Wfflag, e.g. -Wf--no-mov-id
   compiled with other compilers.  These are relatively rare, but do
   occassionally pop up.  Watch out for:
 
-  * Passing a pointer to a callback function into library.  The M/o/Vfuscator
+  * Passing a pointer to a callback function into a library.  The M/o/Vfuscator
 	will clobber registers the library was expecting to have preserved.
 
   * Using the long long type.  The M/o/Vfuscator uses a 32 bit long long; your
