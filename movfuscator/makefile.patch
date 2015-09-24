@@ -12,7 +12,7 @@
  $Bsparc$O:	$Bsparc.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bsparc.c
  $Bx86$O:	$Bx86.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bx86.c
  $Bx86linux$O:	$Bx86linux.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bx86linux.c
-+$Bmov$O:	$Bmov.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bmov.c
++$Bmov$O:	$Bmov.c;	$(CC) $(CFLAGS) -c -Isrc -I../movfuscator -o $@ $Bmov.c
  
  $Bdagcheck.c:	$Blburg$E src/dagcheck.md; $Blburg src/dagcheck.md $@
  $Balpha.c:	$Blburg$E src/alpha.md;    $Blburg src/alpha.md    $@
