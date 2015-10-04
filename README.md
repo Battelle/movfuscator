@@ -33,13 +33,6 @@ BFBASIC compiler by Jeffry Johnston.
 
 M/o/Vfuscator2 is a complete single-instruction C compiler.
 
-## Background
-
-* A presentation explaining the ideation, design, and goals of the M/o/Vfuscator
-  can be found [here](https://www.youtube.com/watch?v=R7EEoWg6Ekk).
-
-* Slides outlining the mechanisms used are [here](slides/domas_2015_the_movfuscator.pdf).
-
 ## Building
 
 The M/o/Vfuscator uses LCC as the compiler frontend.  The included build script
@@ -257,7 +250,13 @@ Current post-processing scripts include:
 
 ## References
 
-* "mov is Turing-complete", by Stephen Dolan: http://www.cl.cam.ac.uk/~sd601/papers/mov.pdf
+* A presentation explaining the ideation, design, and goals of the M/o/Vfuscator
+  can be found [here](https://www.youtube.com/watch?v=R7EEoWg6Ekk).
+
+* Slides outlining the mechanisms used are [here](slides/domas_2015_the_movfuscator.pdf).
+
+* The inspiration for the compiler is the paper ["mov is Turing-complete", 
+  by Stephen Dolan](http://www.cl.cam.ac.uk/~sd601/papers/mov.pdf).
 
 ## Author
 
