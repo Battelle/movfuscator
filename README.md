@@ -24,14 +24,21 @@
 The M/o/Vfuscator (short 'o', sounds like "mobfuscator") compiles programs into
 "mov" instructions, and only "mov" instructions.  Arithmetic, comparisons,
 jumps, function calls, and everything else a program needs are all performed
-through mov operations, and there is no SMC cheating.  The compiler is inspired
-by the paper "mov is Turing-complete", by Stephen Dolan.
+through mov operations alone.  The compiler is inspired by the paper "mov is
+Turing-complete", by Stephen Dolan.
 
 The original M/o/Vfuscator (M/o/Vfuscator 1.0) compiles programs from the
 esoteric language BrainF@$!, and is best used in conjunction with the
 BFBASIC compiler by Jeffry Johnston.
 
 M/o/Vfuscator2 is a complete single-instruction C compiler.
+
+## Background
+
+* A presentation explaining the ideation, design, and goals of the M/o/Vfuscator
+  can be found [here](https://www.youtube.com/watch?v=R7EEoWg6Ekk).
+
+* Slides outlining the mechanisms used are [here](slides/domas_2015_the_movfuscator.pdf).
 
 ## Building
 
@@ -210,6 +217,27 @@ Flags are passed to the compiler proper via -Wfflag, e.g. -Wf--no-mov-id
 	the x86 floating point registers with a mov instruction.  To get rid of the
 	fstp instruction, recompile your libraries to use the M/o/Vfuscator's
 	floating point emulator, instead of the x86 FPU.
+
+## Post-processing
+
+The M/o/Vfuscator post-processors take assembly from the M/o/Vfuscator and
+translate it for additional obfuscation, new instructions, or optimization.  At
+some point they may be integrated into the actual compiler; for now they are
+separate scripts.
+
+Current post-processing scripts include:
+
+  * Instruction shuffling and register renaming, to prevent simple decompilation
+    through pattern matching.
+
+  * Assembly translation into only: XOR, SUB, ADD, XADD, ADC, SBB, AND/OR,
+    PUSH/POP, 1-bit shifts, or CMPXCHG/XCHG instructions.
+
+  * Translation into only 32 bit register-to-memory and memory-to-register
+	transfers.  This may assist in translating M/o/Vfuscated code to other
+	instructions or architectures.
+
+  * Randomization of the above translations.
 
 ## Notes
 
