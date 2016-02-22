@@ -227,6 +227,15 @@ static int crtd=            0;
 #define DISCARD_SIZE    0x200000   /* constrains max size struct/array */
 #define DEBUG_ID        0xcc000000
 
+#define I_LABEL         "LCI"      /* label used by internal (movfuscated) code */
+#define E_LABEL         "LCE"      /* label used by external (non-movfuscated code) */
+#define S_LABEL         "LCS"      /* label used by symbol */
+
+#define REQ             "REQ"      /* indicate to post-processors that the register targets are fixed */
+
+#define MARKER(s)       " # <" s ">"
+
+
 /* M/o/Vfuscation helpers */
 #define STR(x) #x
 #define CNST(x) "$" STR(x)
@@ -2384,14 +2393,14 @@ static void jmp_jumpv(char* a)
 static void jmp_extern(char* f)
 {
 	if (mov_extern) {
-		print("movl (sp), %%esp\n");
+		print("movl (sp), %%esp %s\n", MARKER(REQ));
 		print("movl $%s, (external)\n", f);
 		print("movl (on), %%eax\n");
 		print("movl fault(,%%eax,4), %%eax\n");
 		print("movl (%%eax), %%eax\n");
 	}
 	else {
-		print("movl (sp), %%esp\n");
+		print("movl (sp), %%esp %s\n", MARKER(REQ));
 		print("cmpl $1, (on)\n");
 		print("je %s\n", f);
 	}
@@ -2474,11 +2483,11 @@ static void call_lib(char* f)
 	/* push return */
 	print("# push return\n");
 	if (!mov_flow) {
-		print("movl $.LC%d, %%eax\n", l);
+		print("movl $.%s%d, %%eax\n", I_LABEL, l);
 		push("%eax");
 	}
 	else {
-		print("movl $.LC%d-0x%x, %%eax\n", l, MOV_OFFSET);
+		print("movl $.%s%d-0x%x, %%eax\n", I_LABEL, l, MOV_OFFSET);
 		push("%eax");
 	}
 	print("# end push return\n\n");
@@ -2493,10 +2502,10 @@ static void call_lib(char* f)
 	}
 
 	/* generate return target */
-	print(".LC%d:\n", l);
+	print(".%s%d:\n", I_LABEL, l);
 	if (mov_flow) {
 		print("movl (target), %%eax\n");
-		print("movl $.LC%d-0x%x, %%edx\n", l, MOV_OFFSET); 
+		print("movl $.%s%d-0x%x, %%edx\n", I_LABEL, l, MOV_OFFSET); 
 		alu_eq("(b0)", "%eax", "%edx");
 		load_jmp_regs("(b0)");
 		execution_on("(b0)");
@@ -2764,16 +2773,34 @@ static void emit_start(void)
 	(*IR->segment)(MOV_CODE);
 
 	/* environment setup */
-	/* note: the environment setup occurs outside of the main execution loop.
-	 * it simply sets up the environment, it doesn't perform the program's
-	 * actions; as such, i believe it is acceptable to have non-mov instructions
-	 * in the environment setup.  it's no different than the OS setting up
-	 * page tables for a normal program, and doesn't violate the spirit of the
-	 * project - we just need the environment set up in a certain way to do mov
-	 * computation in ring 3. if we were in ring 0, we could set all this up
-	 * with movs. i don't think anyone wants a ring 0 only compiler. */
-
 	if (crt0) {
+
+		print("\n");
+		print("#\n");
+		print("# environment setup\n");
+		print("#\n");
+		print("\n");
+
+		/* important note on non-mov instructions */
+		/*
+		 * the environment setup here occurs outside of the main execution loop.
+		 * it simply sets up the environment, and performs none of the program's
+		 * actions.  in this sense, it is not actually part of the program; for
+		 * example, when the os sets up a stack or page tables for a process, we
+		 * don't typically consider that action part of the program itself.  as
+		 * such, it seems to be acceptable to have non-mov instructions in this
+		 * setup - since it is not part of the 'program', it doesn't violate the
+		 * spirit of the project.  these non-movs arise from our need to
+		 * communicate with the kernel for environment setup.  if we were in
+		 * ring 0, we wouldn't need help from the kernel, and could do this with
+		 * only movs - but i don't think anyone wants a ring-0-only compiler. 
+		 */
+		if (mov_extern || mov_loop) {
+			printf("\n");
+			printf("# (see compiler notes on non-mov instructions\n");
+			printf("\n");
+		}
+
 		print(".globl _start\n");
 		print("_start:\n");
 
@@ -2784,7 +2811,7 @@ static void emit_start(void)
 			print("movl push(%%esp), %%esp\n");
 			print("movl push(%%esp), %%esp\n");
 			print("movl push(%%esp), %%esp\n");
-			print("movl push(%%esp), %%esp\n");
+			print("movl push(%%esp), %%esp %s\n", MARKER(REQ));
 
 			print(".extern sigaction\n");
 			print("movl $%d, (%%esp)\n", SIGSEGV);
@@ -2798,7 +2825,7 @@ static void emit_start(void)
 			print("movl (sp), %%esp\n");
 			print("movl push(%%esp), %%esp\n");
 			print("movl push(%%esp), %%esp\n");
-			print("movl push(%%esp), %%esp\n");
+			print("movl push(%%esp), %%esp %s\n", MARKER(REQ));
 
 			print(".extern sigaction\n");
 			print("movl $%d, (%%esp)\n", SIGILL);
@@ -2807,6 +2834,12 @@ static void emit_start(void)
 			print("call sigaction\n");
 			print("\n");
 		}
+
+		print("\n");
+		print("#\n");
+		print("# end environment setup\n");
+		print("#\n");
+		print("\n");
 
 		/* launch main */
 
@@ -2819,7 +2852,7 @@ static void emit_start(void)
 		print("_start0:\n");
 
 		if (mov_loop) {
-			print("movl (sp), %%esp\n");
+			print("movl (sp), %%esp %s\n", MARKER(REQ));
 		}
 
 		execution_on("(toggle_execution)");
@@ -2845,14 +2878,14 @@ static void emit_start(void)
 
 		if (!mov_flow) {
 			print("# push return\n");
-			print("movl $.LC%d, %%eax\n", l);
+			print("movl $.%s%d, %%eax\n", I_LABEL, l);
 			push("%eax");
 			print("# end push return\n\n");
 			print("jmp main\n");
 		}
 		else {
 			print("# push return\n");
-			print("movl $.LC%d-0x%x, %%eax\n", l, MOV_OFFSET);
+			print("movl $.%s%d-0x%x, %%eax\n", I_LABEL, l, MOV_OFFSET);
 			push("%eax");
 			print("# end push return\n\n");
 			print("movl $main-0x%x, %%eax\n", MOV_OFFSET);
@@ -2861,11 +2894,11 @@ static void emit_start(void)
 
 		/* generate return target */
 
-		print(".LC%d:\n", l);
+		print(".%s%d:\n", I_LABEL, l);
 
 		if (mov_flow) {
 			print("movl (target), %%eax\n");
-			print("movl $.LC%d-0x%x, %%edx\n", l, MOV_OFFSET);
+			print("movl $.%s%d-0x%x, %%edx\n", I_LABEL, l, MOV_OFFSET);
 			alu_eq("(b0)", "%eax", "%edx");
 			load_jmp_regs("(b0)");
 			execution_on("(b0)");
@@ -2874,7 +2907,7 @@ static void emit_start(void)
 		print("# exit\n");
 		push("$0");
 		if (!mov_flow) {
-			print("movl (sp), %%esp\n");
+			print("movl (sp), %%esp %s\n", MARKER(REQ));
 			print("jmp exit\n");
 		}
 		else {
@@ -3051,7 +3084,7 @@ static void progend(void)
 
 	if (crtf) {
 		if (mov_loop) {
-			print("movl (sp), %%esp\n");
+			print("movl (sp), %%esp %s\n", MARKER(REQ));
 			print("movw %%ax, %%cs\n");
 		}
 		else {
@@ -3062,7 +3095,7 @@ static void progend(void)
 			(*IR->segment)(MOV_PLT);
 			print(".globl dispatch\n");
 			print("dispatch:\n");
-			print("movl (sp), %%esp\n");
+			print("movl (sp), %%esp %s\n", MARKER(REQ));
 			print("jmp *external\n");
 			(*IR->segment)(MOV_CODE);
 		}
@@ -3499,16 +3532,16 @@ static void emit2_nt(Node p, int nt)
 
 		print("# push return\n");
 		if (!mov_flow) {
-			print("movl $.LC%d, %%eax\n", l);
+			print("movl $.%s%d, %%eax\n", ext?E_LABEL:I_LABEL, l);
 			push("%eax");
 		}
 		else if (ext) {
-			print("movl $.LC%d-0x%x, %%eax\n", l, MOV_OFFSET);
+			print("movl $.%s%d-0x%x, %%eax\n", ext?E_LABEL:I_LABEL, l, MOV_OFFSET);
 			alu_add("%eax", "%eax", CNST(MOV_OFFSET));
 			push("%eax");
 		}
 		else {
-			print("movl $.LC%d-0x%x, %%eax\n", l, MOV_OFFSET);
+			print("movl $.%s%d-0x%x, %%eax\n", ext?E_LABEL:I_LABEL, l, MOV_OFFSET);
 			push("%eax");
 		}
 		print("# end push return\n\n");
@@ -3518,7 +3551,7 @@ static void emit2_nt(Node p, int nt)
 		if (ext) {
 			print("# (external call)\n");
 			if (!mov_flow) {
-				print("movl (sp), %%esp\n");
+				print("movl (sp), %%esp %s\n", MARKER(REQ));
 				print("jmp "); emit_kid(p,0,nt); print("\n");
 			}
 			else {
@@ -3551,7 +3584,7 @@ static void emit2_nt(Node p, int nt)
 
 		/* generate return target */
 
-		print(".LC%d:\n", l);
+		print(".%s%d:\n", ext?E_LABEL:I_LABEL, l);
 
 		if (ext) {
 			print("# fix ret conv\n");
@@ -3567,14 +3600,14 @@ static void emit2_nt(Node p, int nt)
 				}
 			}
 			else {
-				print("movl %%eax, (R0)\n");
+				print("movl %%eax, (R0) %s\n", MARKER(REQ));
 			}
 			popr("%eax");
 			print("# end fix ret conv\n");
 		}
 		else if (mov_flow) {
 			print("movl (target), %%eax\n");
-			print("movl $.LC%d-0x%x, %%edx\n", l, MOV_OFFSET); 
+			print("movl $.%s%d-0x%x, %%edx\n", ext?E_LABEL:I_LABEL, l, MOV_OFFSET); 
 			alu_eq("(b0)", "%eax", "%edx");
 			load_jmp_regs("(b0)");
 			execution_on("(b0)");
@@ -4280,7 +4313,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int n)
 	// padding... i hate that assembler 
 	// print(".align 16, 0x90\n"); 
 	print(".type %s,@function\n", f->x.name);
-	print("%s:\n", f->x.name);
+	print("%s: %s\n", f->x.name, MARKER(I_LABEL));
 
 	if (mov_flow) {
 		print("# label\n");
@@ -4406,7 +4439,7 @@ static void defsymbol(Symbol p)
 		p->x.name=stringf("%s.%d", p->name, genlabel(1));
 	}
 	else if (p->generated) {
-		p->x.name=stringf(".LC%s", p->name);
+		p->x.name=stringf(".%s%s", p->scope==LABELS?I_LABEL:S_LABEL, p->name);
 	}
 	else if (p->scope==GLOBAL || p->sclass==EXTERN) {
 		p->x.name=stringf("%s", p->name);
@@ -4592,7 +4625,7 @@ static void global(Symbol p)
 	}
 	else {
 		(*IR->segment)(MOV_DATA);
-		print("%s:\n", p->x.name);
+		print("%s: %s\n", p->x.name, MARKER(S_LABEL));
 	}
 }
 

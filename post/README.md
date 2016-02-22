@@ -76,3 +76,11 @@ Shuffles the assembly instructions to prevent simple decompilation.
 
 Reallocates registers to diversify programs and prevent simple decompilation.
 
+## The RISC post-processor
+
+Converts all move instructions to 4-byte indexed addressing, and reduces the
+program to using two registers.  In general, all accesses become either
+"mov esi/edi, [BASE+esi/edi]" or "mov [BASE+esi/edi], esi/edi", where BASE is
+some constant address.  This allows more easily adapting the M/o/Vfuscator to
+RISC-type architectures.
+
