@@ -24,14 +24,27 @@
 The M/o/Vfuscator (short 'o', sounds like "mobfuscator") compiles programs into
 "mov" instructions, and only "mov" instructions.  Arithmetic, comparisons,
 jumps, function calls, and everything else a program needs are all performed
-through mov operations alone.  The compiler is inspired by the paper "mov is
-Turing-complete", by Stephen Dolan.
+through mov operations; there is no self-modifying code, no transport-triggered
+calculation, and no other form of non-mov cheating.
 
-The original M/o/Vfuscator (M/o/Vfuscator 1.0) compiles programs from the
-esoteric language BrainF@$!, and is best used in conjunction with the
-BFBASIC compiler by Jeffry Johnston.
+The basic effects of the process can be seen in [overview](overview/), which
+illustates compiling a simple prime number function with gcc and the
+M/o/Vfuscator.
 
-M/o/Vfuscator2 is a complete single-instruction C compiler.
+Assembly:
+
+ GCC                               | M/o/Vfuscator
+:---------------------------------:|:---------------------------------:
+ ![gcc asm](/overview/gcc_asm.png) | ![mov asm](/overview/mov_asm.png)
+
+Control flow graphs:
+
+ GCC                               | M/o/Vfuscator
+:---------------------------------:|:---------------------------------:
+ ![gcc CFG](/overview/gcc_cfg.png) | ![mov CFG](/overview/mov_cfg.png)
+
+The compiler currently targets the C programming language and x86 processor
+architecture, but is easily adaptable to other languages and architectures.
 
 ## Building
 
@@ -230,7 +243,32 @@ Current post-processing scripts include:
 	transfers.  This may assist in translating M/o/Vfuscated code to other
 	instructions or architectures.
 
+  * Translation into only indexed addressing forms.
+
   * Randomization of the above translations.
+
+## Other source languages
+
+* The M/o/Vfuscator currently uses C as the source language; Adam Schwalm
+  provided this proof of concept on using other source languages:
+
+  ```
+  # Compile c++ to llvm bytecode
+  clang++ -S -emit-llvm -o bytecode.ll $1
+
+  # Convert bytecode to C
+  llc -march=c -o code.c bytecode.ll
+
+  # 'fix' static inline. This is a workaround for a bug
+  # in one of the parsers, I think.
+  sed -i 's/static inline.*//' code.c
+
+  # hack
+  sed -i 's/extern unsigned char \*__dso_handle;/unsigned char \*__dso_handle=0;/' code.c
+
+  # Compile the resulting C as usual (but with the c++ stdlib)
+  movcc code.c -lstdc++
+  ```
 
 ## Notes
 
@@ -242,6 +280,25 @@ Current post-processing scripts include:
   indefinitely.  A jmp _is_ currently used to dispatch external functions - if
   this is a problem, avoid using external functions, or compile libraries with
   the M/o/Vfuscator as well.
+
+* A common observation on the M/o/Vfuscator output is that it uses all available
+  forms and addressing modes for the mov instruction.  Although the point was
+  never anything different, the RISC post-processor (risc.py) illustrates
+  transforming the program into RISC-like data transfers, reducing the program
+  to 4 byte memory accesses, only indexed addressing modes, and only two
+  registers.  With this, all mov instructions become either 
+  "mov esi/edi, [BASE+esi/edi]" or "mov [BASE+esi/edi], esi/edi", where BASE is
+  some constant address.  This should demonstrate the applicability of the
+  approach on non-x86 architectures, and deter complaints about the diversity of
+  the x86 mov instruction.
+
+## History
+
+* The original M/o/Vfuscator (M/o/Vfuscator 1.0) compiles programs from the
+  esoteric language BrainF@$!, and is best used in conjunction with the BFBASIC
+  compiler by Jeffry Johnston.
+
+* M/o/Vfuscator2 is a complete single-instruction C compiler.
 
 ## F.A.Q.
 
