@@ -10,7 +10,7 @@ echo
 echo "Downloading..."
 echo
 sleep 2
-[ ! -d "examples/aes" ] && git clone https://github.com/kokke/tiny-AES128-C examples/aes
+[ ! -d "validation/aes" ] && git clone https://github.com/kokke/tiny-AES128-C validation/aes
 sleep 2
 echo
 echo
@@ -19,7 +19,7 @@ echo
 echo "M/o/Vfuscating..."
 echo
 sleep 2
-movcc examples/aes/aes.c examples/aes/test.c -o examples/aes/aes -s
+movcc validation/aes/aes.c validation/aes/test.c -o validation/aes/aes -s
 sleep 2
 echo
 echo
@@ -28,7 +28,7 @@ echo
 echo "Dumping..."
 echo
 sleep 2
-objdump -d -Mintel --insn-width=15 examples/aes/aes
+objdump -d -Mintel --insn-width=15 validation/aes/aes
 sleep 2
 echo
 echo
@@ -37,7 +37,7 @@ echo
 echo "Running..."
 echo
 sleep 2
-./examples/aes/aes
+./validation/aes/aes
 sleep 2
 echo "M/o/Vfuscator check complete."
 echo

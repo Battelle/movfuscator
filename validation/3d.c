@@ -107,15 +107,17 @@ int main(void)
 		clear();
 		move(0,0);
 		printw(
-				"M/o/Vfuscator Spinning Cube Demo\n"
-				"\n"
-				"Trigonometric functions, transformation matrices,\n"
-				"vector rotations, and floating point arithmetic,\n"
-				"via an infinite stream of unconditional data transfers.\n"
-				"\n"
-				"Use w, a, s, d, q, e to move.\n"
-				"Frame: %d  \n"
-				, i);
+				" \n"
+				" M/o/Vfuscator Spinning Cube Demo\n"
+				" \n"
+				" Trigonometric functions, transformation matrices,\n"
+				" vector rotations, and floating point arithmetic,\n"
+				" via an infinite stream of unconditional data transfers.\n"
+				" \n"
+				" Use w, a, s, d, q, e to move.\n"
+				" Frame: %d  \n"
+				, i
+				);
 
 		p1xc=(int)(c.p1.x*size_w)+off_x;
 		p1yc=(int)(c.p1.y*size_h)+off_y;
