@@ -249,8 +249,9 @@ Current post-processing scripts include:
 
 ## Other source languages
 
-* The M/o/Vfuscator currently uses C as the source language; Adam Schwalm
-  provided this proof of concept on using other source languages:
+* The M/o/Vfuscator currently uses C as the source language.  The following
+  proof of concept, provided by Adam Schwalm, illustrates how to use a variety
+  of other source languages:
 
   ```
   # Compile c++ to llvm bytecode
