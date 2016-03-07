@@ -2974,7 +2974,9 @@ static void progbeg(int argc, char *argv[])
 
 	emit_header(stdout,1);
 
-	fprint(stderr, "M/o/Vfuscation started...\n\n");
+	if (!quiet) {
+		fprint(stderr, "M/o/Vfuscation started...\n\n");
+	}
 
 	/* override the default emitter in src/gen.c */
 	extern unsigned (*emitter)(Node, int);
@@ -3106,11 +3108,13 @@ static void progend(void)
 	}
 
 	extern int errcnt;
-	if (errcnt==0) {
-		fprint(stderr, "\nM/o/Vfuscation complete.\n\n");
-	}
-	else {
-		fprint(stderr, "\nM/o/Vfuscation failed.\n\n");
+	if (!quiet) {
+		if (errcnt==0) {
+			fprint(stderr, "\nM/o/Vfuscation complete.\n\n");
+		}
+		else {
+			fprint(stderr, "\nM/o/Vfuscation failed.\n\n");
+		}
 	}
 }
 
