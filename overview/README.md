@@ -9,13 +9,19 @@ Assembly:
 
  GCC                               | M/o/Vfuscator
 :---------------------------------:|:---------------------------------:
- ![gcc asm](gcc_asm.png) | ![mov asm](mov_asm.png)
+ ![gcc asm](gcc_asm.png)           | ![mov asm](mov_asm.png)
 
 Control flow graphs:
 
  GCC                               | M/o/Vfuscator
 :---------------------------------:|:---------------------------------:
- ![gcc CFG](gcc_cfg.png) | ![mov CFG](mov_cfg.png)
+ ![gcc CFG](gcc_cfg.png)           | ![mov CFG](mov_cfg.png)
+
+In action:
+
+| movcc prime.c -o prime           |
+|:--------------------------------:|
+| ![demo_mov](demo_mov.gif)        |
 
 ### [prime_gcc.asm](prime_gcc.asm)
 

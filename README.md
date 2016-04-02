@@ -35,13 +35,25 @@ Assembly:
 
  GCC                               | M/o/Vfuscator
 :---------------------------------:|:---------------------------------:
- ![gcc asm](/overview/gcc_asm.png) | ![mov asm](/overview/mov_asm.png)
+ ![gcc asm](overview/gcc_asm.png)  | ![mov asm](overview/mov_asm.png)
 
 Control flow graphs:
 
  GCC                               | M/o/Vfuscator
 :---------------------------------:|:---------------------------------:
- ![gcc CFG](/overview/gcc_cfg.png) | ![mov CFG](/overview/mov_cfg.png)
+ ![gcc CFG](overview/gcc_cfg.png)  | ![mov CFG](overview/mov_cfg.png)
+
+In action:
+
+| movcc prime.c -o prime                     |
+|:------------------------------------------:|
+| ![demo_mov](overview/demo_mov.gif)         |
+
+Of course, as a complete C compiler, it is not limited to simple programs:
+
+| movcc nibbles.c -o nibbles -lncurses       |
+|:------------------------------------------:|
+| ![demo_nibbles](overview/demo_nibbles.gif) |
 
 The compiler currently targets the C programming language and x86 processor
 architecture, but is easily adaptable to other languages and architectures.
@@ -188,18 +200,24 @@ Flags are passed to the compiler proper via -Wfflag, e.g. -Wf--no-mov-id
 * Calls to external functions (printf, etc) through function pointers are not
   yet implemented.  That is,
 
+    ```
     getchar()
+    ```
 
   works, but
-
+  
+    ```
     int (*f)(void)=getchar; f();
+    ```
 
   does not.
 
   If you need to do this, wrap the function internally:
 	
+    ```
     int g(void) { return getchar(); }
-    int (*f)(void)=g; g();
+    int (*f)(void)=g; f();
+    ```
 
 # MOV violations
 
@@ -271,16 +289,7 @@ Current post-processing scripts include:
   movcc code.c -lstdc++
   ```
 
-## Notes
-
-* While Dolan's paper required a jmp instruction, the M/o/Vfuscator does not -
-  it uses a faulting mov instruction to achieve the infinite execution loop.  If
-  you're worried that this is still "jumping", the same effect could be achieved
-  through pages aliased to the same address, wrapping execution around the upper
-  range of memory, ring 0 exception handling, or simply repeating the mov loop
-  indefinitely.  A jmp _is_ currently used to dispatch external functions - if
-  this is a problem, avoid using external functions, or compile libraries with
-  the M/o/Vfuscator as well.
+## Other architectures
 
 * A common observation on the M/o/Vfuscator output is that it uses all available
   forms and addressing modes for the mov instruction.  Although the point was
@@ -293,11 +302,23 @@ Current post-processing scripts include:
   approach on non-x86 architectures, and deter complaints about the diversity of
   the x86 mov instruction.
 
+## Notes
+
+* While Dolan's paper required a jmp instruction, the M/o/Vfuscator does not -
+  it uses a faulting mov instruction to achieve the infinite execution loop.  If
+  you're worried that this is still "jumping", the same effect could be achieved
+  through pages aliased to the same address, wrapping execution around the upper
+  range of memory, ring 0 exception handling, or simply repeating the mov loop
+  indefinitely.  A jmp _is_ currently used to dispatch external functions - if
+  this is a problem, avoid using external functions, or compile libraries with
+  the M/o/Vfuscator as well.
+
 ## History
 
 * The original M/o/Vfuscator (M/o/Vfuscator 1.0) compiles programs from the
   esoteric language BrainF@$!, and is best used in conjunction with the BFBASIC
-  compiler by Jeffry Johnston.
+  compiler by Jeffry Johnston.  It is still available as a proof of concept in
+  the [poc](poc/) directory.
 
 * M/o/Vfuscator2 is a complete single-instruction C compiler.
 
