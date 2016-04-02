@@ -219,7 +219,7 @@ Flags are passed to the compiler proper via -Wfflag, e.g. -Wf--no-mov-id
     int (*f)(void)=g; f();
     ```
 
-# MOV violations
+## MOV violations
 
 * When calling into libraries compiled with other compilers, an occassional
   non-mov instruction is necessary.  This can be fixed by compiling all of your
