@@ -1715,7 +1715,7 @@ static void alu_mul8(char* s, int s_off, char* x, int x_off, char* y, int y_off,
 	print("movb %%dl, (%s+%d)\n", s, s_off);
 	print("movb (%s), %%dl\n", c); /* dup necessary to stick to dword ebx */
 	print("movb alu_mul_sum8h(%%ecx,%%edx), %%dl\n");
-	print("movb alu_mul_sum8l(%%ebx,%%eax), %%dl\n");
+	print("movb alu_mul_sum8l(%%edx,%%eax), %%dl\n");
 	print("movb %%dl, (%s)\n", c);
 	print("# end alu_mul8\n");
 }
