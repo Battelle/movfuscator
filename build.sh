@@ -4,6 +4,7 @@ set -v
 
 # grab the frontend
 [ ! -d "lcc" ] && git clone https://github.com/drh/lcc
+cd lcc && git reset --hard 3b3f01b4103cd7b519ae84bd1122c9b03233e687 && cd -
 
 # create a build directory
 export BUILDDIR=`pwd`/build

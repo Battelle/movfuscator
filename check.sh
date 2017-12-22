@@ -11,6 +11,7 @@ echo "Downloading..."
 echo
 sleep 2
 [ ! -d "validation/aes" ] && git clone https://github.com/kokke/tiny-AES128-C validation/aes
+cd validation/aes && git reset --hard 7e42e693288bdf22d8e677da94248115168211b9 && cd -
 sleep 2
 echo
 echo
