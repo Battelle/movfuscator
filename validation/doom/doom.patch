@@ -1,0 +1,571 @@
+diff -ruN DOOM/linuxdoom-1.10/Makefile doom_mov/linuxdoom-1.10/Makefile
+--- DOOM/linuxdoom-1.10/Makefile	2018-01-06 21:06:12.884993700 -0500
++++ doom_mov/linuxdoom-1.10/Makefile	2018-01-06 21:05:37.667523327 -0500
+@@ -4,11 +4,13 @@
+ #
+ # $Log:$
+ #
+-CC=  gcc  # gcc or g++
++#
++
++CC = movcc
++CFLAGS=-DNORMALUNIX -DLINUX # -DUSEASM 
++LDFLAGS=-L/usr/X11R6/lib -L/usr/lib/i386-linux-gnu/ 
+ 
+-CFLAGS=-g -Wall -DNORMALUNIX -DLINUX # -DUSEASM 
+-LDFLAGS=-L/usr/X11R6/lib
+-LIBS=-lXext -lX11 -lnsl -lm
++LIBS=-lXext -lX11 -lnsl -lm -lc
+ 
+ # subdirectory for objects
+ O=linux
+@@ -84,12 +86,14 @@
+ 	rm -f linux/*
+ 
+ $(O)/linuxxdoom:	$(OBJS) $(O)/i_main.o
+-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \
+-	-o $(O)/linuxxdoom $(LIBS)
++	ld $(LDFLAGS) $(LIBS) -m elf_i386 -dynamic-linker /lib/ld-linux.so.2 -L $(MOVCC)/build/ \
++	-L $(MOVCC)/build/gcc/32 $(MOVCC)/build/crt0.o \
++	$(OBJS) $(O)/i_main.o $(MOVCC)/movfuscator/lib/softfloat64.o $(MOVCC)/build/crtf.o $(MOVCC)/build/crtd.o \
++	/usr/lib32/libc.a -o $(O)/linuxxdoom 
+ 
+ $(O)/%.o:	%.c
+ 	$(CC) $(CFLAGS) -c $< -o $@
+ 
+ #############################################################
+ #
+-#############################################################
+\ No newline at end of file
++#############################################################
+diff -ruN DOOM/linuxdoom-1.10/d_main.c doom_mov/linuxdoom-1.10/d_main.c
+--- DOOM/linuxdoom-1.10/d_main.c	2018-01-06 21:06:12.916995039 -0500
++++ doom_mov/linuxdoom-1.10/d_main.c	2018-01-06 21:05:37.695524488 -0500
+@@ -228,6 +228,9 @@
+     else
+ 	wipe = false;
+ 
++	// domas: disable wipe, game runs slowly enough already
++	wipe = false;
++
+     if (gamestate == GS_LEVEL && gametic)
+ 	HU_Erase();
+     
+@@ -584,11 +587,11 @@
+     sprintf(doom2wad, "%s/doom2.wad", doomwaddir);
+ 
+     // Retail.
+-    doomuwad = malloc(strlen(doomwaddir)+1+8+1);
++    doomuwad = malloc(strlen(doomwaddir)+1+9+1);
+     sprintf(doomuwad, "%s/doomu.wad", doomwaddir);
+     
+     // Registered.
+-    doomwad = malloc(strlen(doomwaddir)+1+8+1);
++    doomwad = malloc(strlen(doomwaddir)+1+9+1);
+     sprintf(doomwad, "%s/doom.wad", doomwaddir);
+     
+     // Shareware.
+diff -ruN DOOM/linuxdoom-1.10/i_sound.c doom_mov/linuxdoom-1.10/i_sound.c
+--- DOOM/linuxdoom-1.10/i_sound.c	2018-01-06 21:06:13.065001234 -0500
++++ doom_mov/linuxdoom-1.10/i_sound.c	2018-01-06 21:05:37.803528965 -0500
+@@ -24,6 +24,10 @@
+ static const char
+ rcsid[] = "$Id: i_unix.c,v 1.5 1997/02/03 22:45:10 b1 Exp $";
+ 
++//domas: movcc preprocessor can't find these
++#define SA_RESTART	0x10000000
++#include <errno.h>
++
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdarg.h>
+@@ -163,7 +167,6 @@
+   int*	arg )
+ {   
+     int		rc;
+-    extern int	errno;
+     
+     rc = ioctl(fd, command, arg);  
+     if (rc < 0)
+@@ -747,6 +750,8 @@
+   else
+     sprintf(buffer, "%s", sndserver_filename);
+   
++  //domas: skip sound
++  /*
+   // start sound process
+   if ( !access(buffer, X_OK) )
+   {
+@@ -754,6 +759,7 @@
+     sndserver = popen(buffer, "w");
+   }
+   else
++  */
+     fprintf(stderr, "Could not start sound server [%s]\n", buffer);
+ #else
+     
+diff -ruN DOOM/linuxdoom-1.10/i_system.c doom_mov/linuxdoom-1.10/i_system.c
+--- DOOM/linuxdoom-1.10/i_system.c	2018-01-06 21:06:13.165005421 -0500
++++ doom_mov/linuxdoom-1.10/i_system.c	2018-01-06 21:05:37.883532282 -0500
+@@ -45,8 +45,13 @@
+ #endif
+ #include "i_system.h"
+ 
+-
+-
++//domas: movfuscator preprocessor can't seem to find this
++#ifndef __GNUC__
++struct timezone {
++int tz_minuteswest;
++int tz_dsttime;
++};
++#endif
+ 
+ int	mb_used = 6;
+ 
+diff -ruN DOOM/linuxdoom-1.10/i_video.c doom_mov/linuxdoom-1.10/i_video.c
+--- DOOM/linuxdoom-1.10/i_video.c	2018-01-06 21:06:12.980997718 -0500
++++ doom_mov/linuxdoom-1.10/i_video.c	2018-01-06 21:05:37.735526147 -0500
+@@ -46,7 +46,7 @@
+ #include <sys/socket.h>
+ 
+ #include <netinet/in.h>
+-#include <errnos.h>
++#include <errno.h>
+ #include <signal.h>
+ 
+ #include "doomstat.h"
+@@ -666,7 +666,6 @@
+       id = shmget((key_t)key, size, IPC_CREAT|0777);
+       if (id==-1)
+       {
+-	extern int errno;
+ 	fprintf(stderr, "errno=%d\n", errno);
+ 	I_Error("Could not get any shared memory");
+       }
+@@ -773,6 +772,9 @@
+     X_visual = X_visualinfo.visual;
+ 
+     // check for the MITSHM extension
++	
++	// domas: queryextension doesn't seem to complete
++	/*
+     doShm = XShmQueryExtension(X_display);
+ 
+     // even if it's available, make sure it's a local connection
+@@ -787,6 +789,7 @@
+ 	    if (!(!strcasecmp(displayname, "unix") || !*displayname)) doShm = false;
+ 	}
+     }
++	*/
+ 
+     fprintf(stderr, "Using MITSHM extension\n");
+ 
+diff -ruN DOOM/linuxdoom-1.10/m_fixed.c doom_mov/linuxdoom-1.10/m_fixed.c
+--- DOOM/linuxdoom-1.10/m_fixed.c	2018-01-06 21:06:12.960996882 -0500
++++ doom_mov/linuxdoom-1.10/m_fixed.c	2018-01-06 21:05:37.727525815 -0500
+@@ -35,8 +35,47 @@
+ #endif
+ #include "m_fixed.h"
+ 
++// domas
++#include <stdio.h>
+ 
++#include <execinfo.h>
++#include <string.h>
++#include <errno.h>
++#include <unistd.h>
++#include <stdlib.h>
+ 
++// domas
++unsigned int umul32hi (unsigned int a, unsigned int b)
++{
++    unsigned int al = (a&0xffff);
++    unsigned int ah = a >> 16;
++    unsigned int bl = (b&0xffff);
++    unsigned int bh = b >> 16;
++    unsigned int p0 = al * bl;
++    unsigned int p1 = al * bh;
++    unsigned int p2 = ah * bl;
++    unsigned int p3 = ah * bh;
++    unsigned int cy = ((p0 >> 16) + (p1&0xffff) + (p2&0xffff)) >> 16;
++    return p3 + (p2 >> 16) + (p1 >> 16) + cy;
++}
++
++int mul32hi (int a, int b)
++{
++    return umul32hi (a, b) - ((a < 0) ? b : 0) - ((b < 0) ? a : 0);
++}
++
++void mul32wide (int a, int b, int *rhi, int *rlo)
++{
++    *rlo = a * b;
++    *rhi = mul32hi (a, b);
++}
++
++int mul_q_1_31 (int a, int b)
++{
++    int hi, lo;
++    mul32wide (a, b, &hi, &lo);
++    return (int)(((unsigned int)hi << 1) | ((unsigned int)lo >> 31));
++}
+ 
+ // Fixme. __USE_C_FIXED__ or something.
+ 
+@@ -45,7 +84,15 @@
+ ( fixed_t	a,
+   fixed_t	b )
+ {
+-    return ((long long) a * (long long) b) >> FRACBITS;
++    int hi, lo;
++
++	// domas: compensate for lack of 64 bit long long in movcc
++    mul32wide (a, b, &hi, &lo);
++	lo>>=FRACBITS;
++	hi<<=FRACBITS;
++	hi|=(lo&0xffff);
++
++	return hi;
+ }
+ 
+ 
+@@ -77,11 +124,18 @@
+     return (fixed_t) c;
+ #endif
+ 
+-    double c;
+-
++	/*
++	double c;
+     c = ((double)a) / ((double)b) * FRACUNIT;
++	*/
++
++	// domas - appears to be a bug in movcc cast/div/mul combination
++    double c, d;
++	d = ((double)a) / ((double)b);
++    c = d * (double)FRACUNIT;
+ 
+     if (c >= 2147483648.0 || c < -2147483648.0)
+ 	I_Error("FixedDiv: divide by zero");
++
+     return (fixed_t) c;
+ }
+diff -ruN DOOM/linuxdoom-1.10/m_misc.c doom_mov/linuxdoom-1.10/m_misc.c
+--- DOOM/linuxdoom-1.10/m_misc.c	2018-01-06 21:06:12.704986084 -0500
++++ doom_mov/linuxdoom-1.10/m_misc.c	2018-01-06 21:05:37.279507241 -0500
+@@ -226,75 +226,75 @@
+ {
+     char*	name;
+     int*	location;
+-    int		defaultvalue;
++    int*	defaultvalue;
+     int		scantranslate;		// PC scan code hack
+     int		untranslated;		// lousy hack
+ } default_t;
+ 
+ default_t	defaults[] =
+ {
+-    {"mouse_sensitivity",&mouseSensitivity, 5},
+-    {"sfx_volume",&snd_SfxVolume, 8},
+-    {"music_volume",&snd_MusicVolume, 8},
+-    {"show_messages",&showMessages, 1},
++    {"mouse_sensitivity",&mouseSensitivity, (int*)5},
++    {"sfx_volume",&snd_SfxVolume, (int*)8},
++    {"music_volume",&snd_MusicVolume, (int*)8},
++    {"show_messages",&showMessages, (int*)1},
+     
+ 
+ #ifdef NORMALUNIX
+-    {"key_right",&key_right, KEY_RIGHTARROW},
+-    {"key_left",&key_left, KEY_LEFTARROW},
+-    {"key_up",&key_up, KEY_UPARROW},
+-    {"key_down",&key_down, KEY_DOWNARROW},
+-    {"key_strafeleft",&key_strafeleft, ','},
+-    {"key_straferight",&key_straferight, '.'},
+-
+-    {"key_fire",&key_fire, KEY_RCTRL},
+-    {"key_use",&key_use, ' '},
+-    {"key_strafe",&key_strafe, KEY_RALT},
+-    {"key_speed",&key_speed, KEY_RSHIFT},
++    {"key_right",&key_right, (int*)KEY_RIGHTARROW},
++    {"key_left",&key_left, (int*)KEY_LEFTARROW},
++    {"key_up",&key_up, (int*)KEY_UPARROW},
++    {"key_down",&key_down, (int*)KEY_DOWNARROW},
++    {"key_strafeleft",&key_strafeleft, (int*)','},
++    {"key_straferight",&key_straferight, (int*)'.'},
++
++    {"key_fire",&key_fire, (int*)KEY_RCTRL},
++    {"key_use",&key_use, (int*)' '},
++    {"key_strafe",&key_strafe, (int*)KEY_RALT},
++    {"key_speed",&key_speed, (int*)KEY_RSHIFT},
+ 
+ // UNIX hack, to be removed. 
+ #ifdef SNDSERV
+-    {"sndserver", (int *) &sndserver_filename, (int) "sndserver"},
+-    {"mb_used", &mb_used, 2},
++    {"sndserver", (int *) &sndserver_filename, (int*)"sndserver"},
++    {"mb_used", &mb_used, (int*)2},
+ #endif
+     
+ #endif
+ 
+ #ifdef LINUX
+-    {"mousedev", (int*)&mousedev, (int)"/dev/ttyS0"},
+-    {"mousetype", (int*)&mousetype, (int)"microsoft"},
++    {"mousedev", (int*)&mousedev, (int*)"/dev/ttyS0"},
++    {"mousetype", (int*)&mousetype, (int*)"microsoft"},
+ #endif
+ 
+-    {"use_mouse",&usemouse, 1},
+-    {"mouseb_fire",&mousebfire,0},
+-    {"mouseb_strafe",&mousebstrafe,1},
+-    {"mouseb_forward",&mousebforward,2},
+-
+-    {"use_joystick",&usejoystick, 0},
+-    {"joyb_fire",&joybfire,0},
+-    {"joyb_strafe",&joybstrafe,1},
+-    {"joyb_use",&joybuse,3},
+-    {"joyb_speed",&joybspeed,2},
+-
+-    {"screenblocks",&screenblocks, 9},
+-    {"detaillevel",&detailLevel, 0},
+-
+-    {"snd_channels",&numChannels, 3},
++    {"use_mouse",&usemouse, (int*)1},
++    {"mouseb_fire",&mousebfire,(int*)0},
++    {"mouseb_strafe",&mousebstrafe,(int*)1},
++    {"mouseb_forward",&mousebforward,(int*)2},
++
++    {"use_joystick",&usejoystick, (int*)0},
++    {"joyb_fire",&joybfire,(int*)0},
++    {"joyb_strafe",&joybstrafe,(int*)1},
++    {"joyb_use",&joybuse,(int*)3},
++    {"joyb_speed",&joybspeed,(int*)2},
++
++    {"screenblocks",&screenblocks, (int*)9},
++    {"detaillevel",&detailLevel, (int*)0},
++
++    {"snd_channels",&numChannels, (int*)3},
+ 
+ 
+ 
+-    {"usegamma",&usegamma, 0},
+-
+-    {"chatmacro0", (int *) &chat_macros[0], (int) HUSTR_CHATMACRO0 },
+-    {"chatmacro1", (int *) &chat_macros[1], (int) HUSTR_CHATMACRO1 },
+-    {"chatmacro2", (int *) &chat_macros[2], (int) HUSTR_CHATMACRO2 },
+-    {"chatmacro3", (int *) &chat_macros[3], (int) HUSTR_CHATMACRO3 },
+-    {"chatmacro4", (int *) &chat_macros[4], (int) HUSTR_CHATMACRO4 },
+-    {"chatmacro5", (int *) &chat_macros[5], (int) HUSTR_CHATMACRO5 },
+-    {"chatmacro6", (int *) &chat_macros[6], (int) HUSTR_CHATMACRO6 },
+-    {"chatmacro7", (int *) &chat_macros[7], (int) HUSTR_CHATMACRO7 },
+-    {"chatmacro8", (int *) &chat_macros[8], (int) HUSTR_CHATMACRO8 },
+-    {"chatmacro9", (int *) &chat_macros[9], (int) HUSTR_CHATMACRO9 }
++    {"usegamma",&usegamma, (int*)0},
++
++    {"chatmacro0", (int *) &chat_macros[0], (int*) HUSTR_CHATMACRO0 },
++    {"chatmacro1", (int *) &chat_macros[1], (int*) HUSTR_CHATMACRO1 },
++    {"chatmacro2", (int *) &chat_macros[2], (int*) HUSTR_CHATMACRO2 },
++    {"chatmacro3", (int *) &chat_macros[3], (int*) HUSTR_CHATMACRO3 },
++    {"chatmacro4", (int *) &chat_macros[4], (int*) HUSTR_CHATMACRO4 },
++    {"chatmacro5", (int *) &chat_macros[5], (int*) HUSTR_CHATMACRO5 },
++    {"chatmacro6", (int *) &chat_macros[6], (int*) HUSTR_CHATMACRO6 },
++    {"chatmacro7", (int *) &chat_macros[7], (int*) HUSTR_CHATMACRO7 },
++    {"chatmacro8", (int *) &chat_macros[8], (int*) HUSTR_CHATMACRO8 },
++    {"chatmacro9", (int *) &chat_macros[9], (int*) HUSTR_CHATMACRO9 }
+ 
+ };
+ 
+@@ -317,8 +317,8 @@
+ 		
+     for (i=0 ; i<numdefaults ; i++)
+     {
+-	if (defaults[i].defaultvalue > -0xfff
+-	    && defaults[i].defaultvalue < 0xfff)
++	if (((int)defaults[i].defaultvalue) > -0xfff
++	    && ((int)defaults[i].defaultvalue) < 0xfff)
+ 	{
+ 	    v = *defaults[i].location;
+ 	    fprintf (f,"%s\t\t%i\n",defaults[i].name,v);
+@@ -351,7 +351,7 @@
+     // set everything to base values
+     numdefaults = sizeof(defaults)/sizeof(defaults[0]);
+     for (i=0 ; i<numdefaults ; i++)
+-	*defaults[i].location = defaults[i].defaultvalue;
++	*defaults[i].location = (int)defaults[i].defaultvalue;
+     
+     // check for a custom default file
+     i = M_CheckParm ("-config");
+diff -ruN DOOM/linuxdoom-1.10/r_data.c doom_mov/linuxdoom-1.10/r_data.c
+--- DOOM/linuxdoom-1.10/r_data.c	2018-01-06 21:06:12.968997215 -0500
++++ doom_mov/linuxdoom-1.10/r_data.c	2018-01-06 21:05:37.727525815 -0500
+@@ -48,6 +48,8 @@
+ 
+ #include "r_data.h"
+ 
++#include <stdlib.h>
++
+ //
+ // Graphics.
+ // DOOM graphics for walls and sprites
+@@ -319,7 +321,8 @@
+     //  that are covered by more than one patch.
+     // Fill in the lump / offset, so columns
+     //  with only a single patch are all done.
+-    patchcount = (byte *)alloca (texture->width);
++    //patchcount = (byte *)alloca (texture->width);
++    patchcount = (byte *)malloc (texture->width);
+     memset (patchcount, 0, texture->width);
+     patch = texture->patches;
+ 		
+@@ -371,6 +374,8 @@
+ 	    texturecompositesize[texnum] += texture->height;
+ 	}
+     }	
++
++	free(patchcount );
+ }
+ 
+ 
+@@ -448,7 +453,8 @@
+     names = W_CacheLumpName ("PNAMES", PU_STATIC);
+     nummappatches = LONG ( *((int *)names) );
+     name_p = names+4;
+-    patchlookup = alloca (nummappatches*sizeof(*patchlookup));
++    //patchlookup = alloca (nummappatches*sizeof(*patchlookup));
++    patchlookup = malloc (nummappatches*sizeof(*patchlookup));
+     
+     for (i=0 ; i<nummappatches ; i++)
+     {
+@@ -571,6 +577,8 @@
+     
+     for (i=0 ; i<numtextures ; i++)
+ 	texturetranslation[i] = i;
++
++	free(patchlookup );
+ }
+ 
+ 
+@@ -759,7 +767,8 @@
+ 	return;
+     
+     // Precache flats.
+-    flatpresent = alloca(numflats);
++    //flatpresent = alloca(numflats);
++    flatpresent = malloc(numflats);
+     memset (flatpresent,0,numflats);	
+ 
+     for (i=0 ; i<numsectors ; i++)
+@@ -781,7 +790,8 @@
+     }
+     
+     // Precache textures.
+-    texturepresent = alloca(numtextures);
++    //texturepresent = alloca(numtextures);
++    texturepresent = malloc(numtextures);
+     memset (texturepresent,0, numtextures);
+ 	
+     for (i=0 ; i<numsides ; i++)
+@@ -816,7 +826,8 @@
+     }
+     
+     // Precache sprites.
+-    spritepresent = alloca(numsprites);
++    //spritepresent = alloca(numsprites);
++    spritepresent = malloc(numsprites);
+     memset (spritepresent,0, numsprites);
+ 	
+     for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
+@@ -842,6 +853,11 @@
+ 	    }
+ 	}
+     }
++
++
++    free(flatpresent);
++	free( texturepresent );
++	free( spritepresent );
+ }
+ 
+ 
+diff -ruN DOOM/linuxdoom-1.10/s_sound.c doom_mov/linuxdoom-1.10/s_sound.c
+--- DOOM/linuxdoom-1.10/s_sound.c	2018-01-06 21:06:12.856992528 -0500
++++ doom_mov/linuxdoom-1.10/s_sound.c	2018-01-06 21:05:37.639522167 -0500
+@@ -364,7 +364,7 @@
+   if (sfx->lumpnum < 0)
+     sfx->lumpnum = I_GetSfxLumpNum(sfx);
+ 
+-#ifndef SNDSRV
++#ifndef SNDSERV
+   // cache data if necessary
+   if (!sfx->data)
+   {
+diff -ruN DOOM/linuxdoom-1.10/w_wad.c doom_mov/linuxdoom-1.10/w_wad.c
+--- DOOM/linuxdoom-1.10/w_wad.c	2018-01-06 21:06:12.916995039 -0500
++++ doom_mov/linuxdoom-1.10/w_wad.c	2018-01-06 21:05:37.691524323 -0500
+@@ -146,9 +146,11 @@
+     int			handle;
+     int			length;
+     int			startlump;
+-    filelump_t*		fileinfo;
++    filelump_t*		fileinfo, *fileinfo2;
+     filelump_t		singleinfo;
+     int			storehandle;
++	int alloced=0;
++
+     
+     // open the file and add to directory
+ 
+@@ -196,7 +198,10 @@
+ 	header.numlumps = LONG(header.numlumps);
+ 	header.infotableofs = LONG(header.infotableofs);
+ 	length = header.numlumps*sizeof(filelump_t);
+-	fileinfo = alloca (length);
++	//fileinfo = alloca (length);
++	fileinfo = malloc (length);
++	fileinfo2 = fileinfo;
++	alloced=1;
+ 	lseek (handle, header.infotableofs, SEEK_SET);
+ 	read (handle, fileinfo, length);
+ 	numlumps += header.numlumps;
+@@ -223,6 +228,11 @@
+ 	
+     if (reloadname)
+ 	close (handle);
++
++	if (alloced)
++	{
++		free(fileinfo2);
++	}
+ }
+ 
+ 
+@@ -241,7 +251,7 @@
+     unsigned		i;
+     int			handle;
+     int			length;
+-    filelump_t*		fileinfo;
++    filelump_t*		fileinfo, *fileinfo2;
+ 	
+     if (!reloadname)
+ 	return;
+@@ -253,7 +263,9 @@
+     lumpcount = LONG(header.numlumps);
+     header.infotableofs = LONG(header.infotableofs);
+     length = lumpcount*sizeof(filelump_t);
+-    fileinfo = alloca (length);
++    //fileinfo = alloca (length);
++	fileinfo=malloc(length);
++	fileinfo2=fileinfo;
+     lseek (handle, header.infotableofs, SEEK_SET);
+     read (handle, fileinfo, length);
+     
+@@ -272,6 +284,8 @@
+     }
+ 	
+     close (handle);
++
++	free(fileinfo2);
+ }
+ 
+ 
